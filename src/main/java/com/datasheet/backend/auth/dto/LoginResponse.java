@@ -1,0 +1,23 @@
+package com.datasheet.backend.auth.dto;
+
+import lombok.Builder;
+import lombok.Getter;
+
+@Getter
+@Builder
+public class LoginResponse {
+
+	private String accessToken;
+	private String tokenType;
+	private long expiresInMs;
+	private UserInfo user;
+
+	@Getter
+	@Builder
+	public static class UserInfo {
+		private Long id;
+		private String employeeId;
+		private String name;
+		private String role;
+	}
+}
