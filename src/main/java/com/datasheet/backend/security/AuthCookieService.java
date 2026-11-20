@@ -10,24 +10,29 @@ import java.time.Duration;
 public class AuthCookieService {
 
 	public static final String ACCESS_TOKEN_COOKIE = "ACCESS_TOKEN";
+	public static final String REFRESH_TOKEN_COOKIE = "REFRESH_TOKEN";
 
 	public ResponseCookie createAccessTokenCookie(String token, long expiresInMs) {
-		return ResponseCookie.from(ACCESS_TOKEN_COOKIE, token)
-				.httpOnly(true)
-				.secure(false)
-				.path("/")
+		return baseCookie(ACCESS_TOKEN_COOKIE, token)
 				.maxAge(Duration.ofMillis(expiresInMs))
-				.sameSite("Lax")
+				.build();
+	}
+
+	public ResponseCookie createRefreshTokenCookie(String token, long expiresInMs) {
+		return baseCookie(REFRESH_TOKEN_COOKIE, token)
+				.maxAge(Duration.ofMillis(expiresInMs))
 				.build();
 	}
 
 	public ResponseCookie clearAccessTokenCookie() {
-		return ResponseCookie.from(ACCESS_TOKEN_COOKIE, "")
-				.httpOnly(true)
-				.secure(false)
-				.path("/")
+		return baseCookie(ACCESS_TOKEN_COOKIE, "")
 				.maxAge(0)
-				.sameSite("Lax")
+				.build();
+	}
+
+	public ResponseCookie clearRefreshTokenCookie() {
+		return baseCookie(REFRESH_TOKEN_COOKIE, "")
+				.maxAge(0)
 				.build();
 	}
 
@@ -37,5 +42,13 @@ public class AuthCookieService {
 
 	public String setCookieHeaderName() {
 		return HttpHeaders.SET_COOKIE;
+	}
+
+	private ResponseCookie.ResponseCookieBuilder baseCookie(String name, String value) {
+		return ResponseCookie.from(name, value)
+				.httpOnly(true)
+				.secure(false)
+				.path("/")
+				.sameSite("Lax");
 	}
 }

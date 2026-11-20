@@ -26,8 +26,9 @@ public class AuthService {
 	private final JwtService jwtService;
 	private final AuthProperties authProperties;
 	private final LoginAttemptService loginAttemptService;
+	private final RefreshTokenService refreshTokenService;
 
-	@Transactional(readOnly = true)
+	@Transactional
 	public LoginResult login(LoginRequest request) {
 		User user = userRepository.findByEmployeeId(request.getEmployeeId())
 				.orElseThrow(() -> new BusinessException(
@@ -70,15 +71,50 @@ public class AuthService {
 		}
 
 		loginAttemptService.resetFailures(user.getId());
+		refreshTokenService.revokeAllForUser(user.getId());
 
-		String token = jwtService.createToken(user);
+		return issueTokens(user);
+	}
+
+	@Transactional
+	public LoginResult refresh(String rawRefreshToken) {
+		if (rawRefreshToken == null || rawRefreshToken.isBlank()) {
+			throw new BusinessException(
+					"INVALID_REFRESH_TOKEN",
+					"Refresh Token이 없습니다.",
+					HttpStatus.UNAUTHORIZED
+			);
+		}
+
+		User user = refreshTokenService.rotateAndGetUser(rawRefreshToken);
+		return issueTokens(user);
+	}
+
+	@Transactional
+	public void logout(String rawRefreshToken) {
+		refreshTokenService.revoke(rawRefreshToken);
+	}
+
+	@Transactional(readOnly = true)
+	public UserResponse me(Authentication authentication) {
+		CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
+		return UserResponse.from(principal.getUser());
+	}
+
+	private LoginResult issueTokens(User user) {
+		String accessToken = jwtService.createAccessToken(user);
+		String refreshToken = refreshTokenService.issue(user);
 		long expiresInMs = jwtService.getExpirationMs();
+		long refreshExpiresInMs = jwtService.getRefreshExpirationMs();
 
 		return LoginResult.builder()
-				.accessToken(token)
+				.accessToken(accessToken)
+				.refreshToken(refreshToken)
+				.refreshExpiresInMs(refreshExpiresInMs)
 				.response(LoginResponse.builder()
 						.tokenType("Bearer")
 						.expiresInMs(expiresInMs)
+						.refreshExpiresInMs(refreshExpiresInMs)
 						.user(LoginResponse.UserInfo.builder()
 								.id(user.getId())
 								.employeeId(user.getEmployeeId())
@@ -87,11 +123,5 @@ public class AuthService {
 								.build())
 						.build())
 				.build();
-	}
-
-	@Transactional(readOnly = true)
-	public UserResponse me(Authentication authentication) {
-		CustomUserDetails principal = (CustomUserDetails) authentication.getPrincipal();
-		return UserResponse.from(principal.getUser());
 	}
 }

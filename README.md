@@ -31,46 +31,49 @@
 - UI: http://localhost:8080/swagger-ui.html
 - OpenAPI JSON: http://localhost:8080/v3/api-docs
 
+### 인증 API
+
+| Method | Path | 설명 |
+|--------|------|------|
+| POST | `/api/auth/login` | 로그인 — Access(30분)·Refresh(12시간) HttpOnly 쿠키 발급 |
+| POST | `/api/auth/refresh` | Refresh로 Access 재발급 (Refresh 회전) |
+| POST | `/api/auth/logout` | Refresh 폐기 + 쿠키 삭제 |
+| GET | `/api/auth/me` | 내 정보 조회 |
+
+- Access Token 쿠키: `ACCESS_TOKEN`
+- Refresh Token 쿠키: `REFRESH_TOKEN` (DB에 해시 저장, 로그아웃 시 폐기)
+- 프론트: Access 만료/401 시 `/api/auth/refresh` 호출, 30분 미사용 시 `/api/auth/logout`
+
 ## 폴더 구조
 
 ```
 DataSheed_backEnd/
 ├── build.gradle
 ├── settings.gradle
+├── sql/
+│   └── create_refresh_tokens.sql            # refresh_tokens 테이블 DDL
 ├── src/
 │   ├── main/
 │   │   ├── java/com/datasheet/backend/
-│   │   │   ├── BackendApplication.java      # 애플리케이션 진입점
+│   │   │   ├── BackendApplication.java
 │   │   │   ├── config/
-│   │   │   │   └── OpenApiConfig.java       # Swagger/OpenAPI 설정
-│   │   │   ├── auth/                        # 로그인·인증 API
+│   │   │   │   └── OpenApiConfig.java
+│   │   │   ├── auth/
 │   │   │   │   ├── AuthController.java
 │   │   │   │   ├── AuthService.java
-│   │   │   │   ├── LoginAttemptService.java # 로그인 실패/잠금 처리
+│   │   │   │   ├── LoginAttemptService.java
+│   │   │   │   ├── RefreshToken.java
+│   │   │   │   ├── RefreshTokenRepository.java
+│   │   │   │   ├── RefreshTokenService.java
 │   │   │   │   └── dto/
-│   │   │   │       ├── LoginRequest.java
-│   │   │   │       ├── LoginResponse.java
-│   │   │   │       └── UserResponse.java
-│   │   │   ├── user/                        # 사용자 도메인
-│   │   │   │   ├── User.java                # users 테이블 엔티티
-│   │   │   │   └── UserRepository.java
-│   │   │   ├── security/                    # 보안·JWT 설정
-│   │   │   │   ├── SecurityConfig.java
-│   │   │   │   ├── JwtService.java
-│   │   │   │   ├── JwtAuthenticationFilter.java
-│   │   │   │   ├── JwtProperties.java
-│   │   │   │   ├── AuthProperties.java
-│   │   │   │   ├── CustomUserDetails.java
-│   │   │   │   └── CustomUserDetailsService.java
-│   │   │   └── common/                      # 공통 예외·응답
-│   │   │       ├── ApiErrorResponse.java
-│   │   │       ├── BusinessException.java
-│   │   │       └── GlobalExceptionHandler.java
+│   │   │   ├── user/
+│   │   │   ├── security/
+│   │   │   │   ├── AuthCookieService.java
+│   │   │   │   └── ...
+│   │   │   └── common/
 │   │   └── resources/
-│   │       └── application.properties       # DB·JWT 설정
+│   │       ├── application.properties.example
+│   │       └── application.properties       # gitignore
 │   └── test/
-│       └── java/com/datasheet/backend/
-│           └── BackendApplicationTests.java
 └── README.md
 ```
-# DataSheet_backEnd

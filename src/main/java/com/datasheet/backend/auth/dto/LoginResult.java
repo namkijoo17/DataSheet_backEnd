@@ -8,5 +8,7 @@ import lombok.Getter;
 public class LoginResult {
 
 	private String accessToken;
+	private String refreshToken;
+	private long refreshExpiresInMs;
 	private LoginResponse response;
 }

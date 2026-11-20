@@ -9,9 +9,11 @@ spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.SQLServerDialect
 spring.jpa.open-in-view=false
 
-# JWT (30분 만료 — 미사용 시 자동 로그아웃)
+# JWT Access Token (30분) — 만료 시 /api/auth/refresh 로 재발급
 app.jwt.secret=CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_32_CHARS
 app.jwt.expiration-ms=1800000
+# Refresh Token (12시간)
+app.jwt.refresh-expiration-ms=43200000
 
 # 로그인 실패 5회 시 계정 잠금
 app.auth.max-failed-login=5
