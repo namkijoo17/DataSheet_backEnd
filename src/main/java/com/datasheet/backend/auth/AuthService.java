@@ -2,6 +2,7 @@ package com.datasheet.backend.auth;
 
 import com.datasheet.backend.auth.dto.LoginRequest;
 import com.datasheet.backend.auth.dto.LoginResponse;
+import com.datasheet.backend.auth.dto.LoginResult;
 import com.datasheet.backend.auth.dto.UserResponse;
 import com.datasheet.backend.common.BusinessException;
 import com.datasheet.backend.security.AuthProperties;
@@ -27,7 +28,7 @@ public class AuthService {
 	private final LoginAttemptService loginAttemptService;
 
 	@Transactional(readOnly = true)
-	public LoginResponse login(LoginRequest request) {
+	public LoginResult login(LoginRequest request) {
 		User user = userRepository.findByEmployeeId(request.getEmployeeId())
 				.orElseThrow(() -> new BusinessException(
 						"INVALID_CREDENTIALS",
@@ -71,15 +72,19 @@ public class AuthService {
 		loginAttemptService.resetFailures(user.getId());
 
 		String token = jwtService.createToken(user);
-		return LoginResponse.builder()
+		long expiresInMs = jwtService.getExpirationMs();
+
+		return LoginResult.builder()
 				.accessToken(token)
-				.tokenType("Bearer")
-				.expiresInMs(jwtService.getExpirationMs())
-				.user(LoginResponse.UserInfo.builder()
-						.id(user.getId())
-						.employeeId(user.getEmployeeId())
-						.name(user.getName())
-						.role(user.getRole())
+				.response(LoginResponse.builder()
+						.tokenType("Bearer")
+						.expiresInMs(expiresInMs)
+						.user(LoginResponse.UserInfo.builder()
+								.id(user.getId())
+								.employeeId(user.getEmployeeId())
+								.name(user.getName())
+								.role(user.getRole())
+								.build())
 						.build())
 				.build();
 	}

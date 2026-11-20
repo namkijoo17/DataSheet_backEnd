@@ -2,6 +2,7 @@ package com.datasheet.backend.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		String bearer = request.getHeader(HttpHeaders.AUTHORIZATION);
 		if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
 			return bearer.substring(7);
+		}
+
+		Cookie[] cookies = request.getCookies();
+		if (cookies == null) {
+			return null;
+		}
+
+		for (Cookie cookie : cookies) {
+			if (AuthCookieService.ACCESS_TOKEN_COOKIE.equals(cookie.getName())
+					&& StringUtils.hasText(cookie.getValue())) {
+				return cookie.getValue();
+			}
 		}
 		return null;
 	}
