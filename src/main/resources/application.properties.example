@@ -18,6 +18,10 @@ app.jwt.refresh-expiration-ms=43200000
 # 로그인 실패 5회 시 계정 잠금
 app.auth.max-failed-login=5
 
+# 데이터시트 파일 폴더 (수동으로 PDF 등 배치)
+app.file.datasheet-dir=./storage/datasheets
+
 # Swagger
 springdoc.swagger-ui.path=/swagger-ui.html
 springdoc.api-docs.path=/v3/api-docs
+

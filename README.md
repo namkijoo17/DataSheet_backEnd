@@ -44,7 +44,20 @@
 - Refresh Token 쿠키: `REFRESH_TOKEN` (DB에 해시 저장, 로그아웃 시 폐기)
 - 프론트: Access 만료/401 시 `/api/auth/refresh` 호출, 30분 미사용 시 `/api/auth/logout`
 
+### 데이터시트 파일 API
+
+파일을 `app.file.datasheet-dir` 폴더에 직접 넣은 뒤 조회합니다. (업로드 API 없음)
+
+| Method | Path | 설명 |
+|--------|------|------|
+| GET | `/api/datasheets` | 파일 목록 |
+| GET | `/api/datasheets/{fileName}/file` | 파일 스트리밍 (미리보기/다운로드) |
+
+기본 경로: `./storage/datasheets`  
+로그인 필요 (`ACCESS_TOKEN` 쿠키)
+
 ## 폴더 구조
+
 
 ```
 DataSheed_backEnd/
@@ -67,13 +80,14 @@ DataSheed_backEnd/
 │   │   │   │   ├── RefreshTokenService.java
 │   │   │   │   └── dto/
 │   │   │   ├── user/
+│   │   │   ├── file/                        # 데이터시트 파일 조회
+│   │   │   │   ├── DatasheetController.java
+│   │   │   │   ├── DatasheetFileService.java
+│   │   │   │   └── FileStorageProperties.java
 │   │   │   ├── security/
-│   │   │   │   ├── AuthCookieService.java
-│   │   │   │   └── ...
 │   │   │   └── common/
 │   │   └── resources/
-│   │       ├── application.properties.example
-│   │       └── application.properties       # gitignore
-│   └── test/
+│   ├── test/
+├── storage/datasheets/                      # 데이터시트 원본 수동 배치
 └── README.md
 ```

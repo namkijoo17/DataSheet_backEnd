@@ -50,3 +50,7 @@ Thumbs.db
 **/application.yml
 !**/application.properties.example
 !**/application.yml.example
+
+### Local datasheet files ###
+storage/datasheets/*
+!storage/datasheets/.gitkeep
