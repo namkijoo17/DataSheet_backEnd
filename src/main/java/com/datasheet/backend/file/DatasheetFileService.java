@@ -1,7 +1,7 @@
 package com.datasheet.backend.file;
 
 import com.datasheet.backend.common.BusinessException;
-import com.datasheet.backend.file.dto.DatasheetFileResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -10,16 +10,11 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Instant;
-import java.util.Comparator;
-import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -32,26 +27,6 @@ public class DatasheetFileService {
 	void init() throws IOException {
 		rootDir = Paths.get(fileStorageProperties.getDatasheetDir()).toAbsolutePath().normalize();
 		Files.createDirectories(rootDir);
-	}
-
-	public List<DatasheetFileResponse> listFiles() {
-		if (!Files.isDirectory(rootDir)) {
-			return List.of();
-		}
-
-		try (Stream<Path> stream = Files.list(rootDir)) {
-			return stream
-					.filter(Files::isRegularFile)
-					.map(this::toResponse)
-					.sorted(Comparator.comparing(DatasheetFileResponse::getFileName, String.CASE_INSENSITIVE_ORDER))
-					.toList();
-		} catch (IOException e) {
-			throw new BusinessException(
-					"FILE_LIST_FAILED",
-					"데이터시트 목록을 조회하지 못했습니다.",
-					HttpStatus.INTERNAL_SERVER_ERROR
-			);
-		}
 	}
 
 	public Resource loadAsResource(String fileName) {
@@ -125,23 +100,5 @@ public class DatasheetFileService {
 			);
 		}
 		return resolved;
-	}
-
-	private DatasheetFileResponse toResponse(Path path) {
-		try {
-			return DatasheetFileResponse.builder()
-					.fileName(path.getFileName().toString())
-					.sizeBytes(Files.size(path))
-					.contentType(detectContentType(path.getFileName().toString()))
-					.lastModified(Files.getLastModifiedTime(path).toInstant())
-					.build();
-		} catch (IOException e) {
-			return DatasheetFileResponse.builder()
-					.fileName(path.getFileName().toString())
-					.sizeBytes(0)
-					.contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
-					.lastModified(Instant.EPOCH)
-					.build();
-		}
 	}
 }

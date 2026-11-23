@@ -44,16 +44,19 @@
 - Refresh Token 쿠키: `REFRESH_TOKEN` (DB에 해시 저장, 로그아웃 시 폐기)
 - 프론트: Access 만료/401 시 `/api/auth/refresh` 호출, 30분 미사용 시 `/api/auth/logout`
 
-### 데이터시트 파일 API
+### 데이터시트 API
 
-파일을 `app.file.datasheet-dir` 폴더에 직접 넣은 뒤 조회합니다. (업로드 API 없음)
+- PDF 원본: `app.file.datasheet-dir` 폴더에 수동 배치
+- 메타/항목/범위/좌표: DB `datasheets`, `datasheet_items`
+- `is_inspection_item`: `true`=검사항목(판정), `false`=정보·환경 등 비검사 입력
+- `is_array` / `array_size`: 동일 규격의 다중 값 입력. 요소별 PDF 좌표는 `datasheet_item_slots`
 
 | Method | Path | 설명 |
 |--------|------|------|
-| GET | `/api/datasheets` | 파일 목록 |
-| GET | `/api/datasheets/{fileName}/file` | 파일 스트리밍 (미리보기/다운로드) |
+| GET | `/api/datasheets` | 활성 데이터시트 목록 |
+| GET | `/api/datasheets/{id}` | 상세 + items (검사여부·범위·PDF좌표) |
+| GET | `/api/datasheets/{id}/file` | PDF 스트리밍 |
 
-기본 경로: `./storage/datasheets`  
 로그인 필요 (`ACCESS_TOKEN` 쿠키)
 
 ## 폴더 구조
@@ -80,10 +83,11 @@ DataSheed_backEnd/
 │   │   │   │   ├── RefreshTokenService.java
 │   │   │   │   └── dto/
 │   │   │   ├── user/
-│   │   │   ├── file/                        # 데이터시트 파일 조회
+│   │   │   ├── datasheet/                   # 데이터시트 기준정보
 │   │   │   │   ├── DatasheetController.java
-│   │   │   │   ├── DatasheetFileService.java
-│   │   │   │   └── FileStorageProperties.java
+│   │   │   │   ├── Datasheet.java / DatasheetItem.java
+│   │   │   │   └── ...
+│   │   │   ├── file/                        # 로컬 폴더 파일 스트리밍
 │   │   │   ├── security/
 │   │   │   └── common/
 │   │   └── resources/
