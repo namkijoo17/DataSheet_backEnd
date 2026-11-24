@@ -3,6 +3,7 @@ package com.datasheet.backend.datasheet;
 import com.datasheet.backend.datasheet.dto.DatasheetCreateRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetDetailResponse;
 import com.datasheet.backend.datasheet.dto.DatasheetItemResponse;
+import com.datasheet.backend.datasheet.dto.DatasheetItemReorderRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetItemUpsertRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetPositionRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetSummaryResponse;
@@ -99,6 +100,15 @@ public class DatasheetController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void deleteItem(@PathVariable Long id, @PathVariable Long itemId) {
 		datasheetService.deleteItem(id, itemId);
+	}
+
+	@Operation(summary = "항목 표시 순서 변경", description = "itemIds 배열 순서대로 sortOrder를 다시 부여합니다.")
+	@PutMapping("/{id}/items-order")
+	public ResponseEntity<DatasheetDetailResponse> reorderItems(
+			@PathVariable Long id,
+			@Valid @RequestBody DatasheetItemReorderRequest request
+	) {
+		return ResponseEntity.ok(datasheetService.reorderItems(id, request));
 	}
 
 	@Operation(summary = "항목 좌표만 갱신")

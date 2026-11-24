@@ -5,6 +5,7 @@ import com.datasheet.backend.datasheet.dto.DatasheetCreateRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetDetailResponse;
 import com.datasheet.backend.datasheet.dto.DatasheetItemResponse;
 import com.datasheet.backend.datasheet.dto.DatasheetItemRangeRuleRequest;
+import com.datasheet.backend.datasheet.dto.DatasheetItemReorderRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetItemSlotRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetItemUpsertRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetPositionRequest;
@@ -18,7 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -228,6 +234,45 @@ public class DatasheetService {
 			other.getRangeRules().removeIf(rule -> itemId.equals(rule.getDependsOnItemId()));
 		}
 		sheet.removeItem(item);
+	}
+
+	@Transactional
+	public DatasheetDetailResponse reorderItems(Long datasheetId, DatasheetItemReorderRequest request) {
+		Datasheet sheet = requireSheetWithItems(datasheetId);
+		List<Long> orderedIds = request.getItemIds();
+		// join fetch(slots+rangeRules) 시 List에 동일 항목이 중복될 수 있음
+		Map<Long, DatasheetItem> byId = sheet.getItems().stream()
+				.collect(Collectors.toMap(
+						DatasheetItem::getId,
+						Function.identity(),
+						(existing, ignored) -> existing
+				));
+
+		if (orderedIds.size() != byId.size()) {
+			throw new BusinessException(
+					"INVALID_REORDER",
+					"모든 항목 id를 순서대로 보내주세요.",
+					HttpStatus.BAD_REQUEST
+			);
+		}
+
+		Set<Long> seen = new HashSet<>();
+		for (Long id : orderedIds) {
+			if (!seen.add(id) || !byId.containsKey(id)) {
+				throw new BusinessException(
+						"INVALID_REORDER",
+						"항목 id가 올바르지 않습니다.",
+						HttpStatus.BAD_REQUEST
+				);
+			}
+		}
+
+		int order = 1;
+		for (Long id : orderedIds) {
+			byId.get(id).updateSortOrder(order++);
+		}
+		datasheetRepository.flush();
+		return DatasheetDetailResponse.from(sheet);
 	}
 
 	@Transactional

@@ -15,7 +15,6 @@ public interface DatasheetRepository extends JpaRepository<Datasheet, Long> {
 			select distinct d from Datasheet d
 			left join fetch d.items i
 			left join fetch i.slots
-			left join fetch i.rangeRules
 			where d.id = :id
 			""")
 	Optional<Datasheet> findByIdWithItems(@Param("id") Long id);

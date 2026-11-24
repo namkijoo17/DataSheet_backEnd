@@ -16,6 +16,7 @@ import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.BatchSize;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -115,6 +116,7 @@ public class DatasheetItem {
 
 	@OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
 	@OrderBy("matchSlotIndex ASC")
+	@BatchSize(size = 50)
 	private Set<DatasheetItemRangeRule> rangeRules = new LinkedHashSet<>();
 
 	@Column(name = "created_at", nullable = false)
@@ -234,6 +236,10 @@ public class DatasheetItem {
 		this.posY = posY;
 		this.posWidth = posWidth;
 		this.posHeight = posHeight;
+	}
+
+	public void updateSortOrder(int sortOrder) {
+		this.sortOrder = sortOrder;
 	}
 
 	@PrePersist
