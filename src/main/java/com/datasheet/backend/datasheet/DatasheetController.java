@@ -1,5 +1,6 @@
 package com.datasheet.backend.datasheet;
 
+import com.datasheet.backend.datasheet.dto.DatasheetCreateRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetDetailResponse;
 import com.datasheet.backend.datasheet.dto.DatasheetItemResponse;
 import com.datasheet.backend.datasheet.dto.DatasheetItemUpsertRequest;
@@ -21,9 +22,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -46,6 +50,29 @@ public class DatasheetController {
 	@GetMapping("/{id}")
 	public ResponseEntity<DatasheetDetailResponse> detail(@PathVariable Long id) {
 		return ResponseEntity.ok(datasheetService.getDetail(id));
+	}
+
+	@Operation(summary = "데이터시트 추가", description = "PDF 업로드와 함께 데이터시트를 생성합니다. 코드·개정은 자동 처리됩니다.")
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<DatasheetDetailResponse> create(
+			@RequestParam String name,
+			@RequestParam(required = false) BigDecimal pageWidth,
+			@RequestParam(required = false) BigDecimal pageHeight,
+			@RequestParam("file") MultipartFile file
+	) {
+		DatasheetCreateRequest request = new DatasheetCreateRequest();
+		request.setName(name);
+		request.setRevision(1);
+		request.setPageWidth(pageWidth);
+		request.setPageHeight(pageHeight);
+		return ResponseEntity.status(HttpStatus.CREATED).body(datasheetService.create(request, file));
+	}
+
+	@Operation(summary = "데이터시트 삭제", description = "시트 메타·항목과 PDF 파일을 삭제합니다.")
+	@DeleteMapping("/{id}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void delete(@PathVariable Long id) {
+		datasheetService.delete(id);
 	}
 
 	@Operation(summary = "항목 추가")

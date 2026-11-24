@@ -113,6 +113,10 @@ public class DatasheetItem {
 	@OrderBy("slotIndex ASC")
 	private Set<DatasheetItemSlot> slots = new LinkedHashSet<>();
 
+	@OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OrderBy("matchSlotIndex ASC")
+	private Set<DatasheetItemRangeRule> rangeRules = new LinkedHashSet<>();
+
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
@@ -173,6 +177,15 @@ public class DatasheetItem {
 
 	public void clearSlots() {
 		slots.clear();
+	}
+
+	public void addRangeRule(DatasheetItemRangeRule rule) {
+		rangeRules.add(rule);
+		rule.setItem(this);
+	}
+
+	public void clearRangeRules() {
+		rangeRules.clear();
 	}
 
 	public void updateMeta(

@@ -7,12 +7,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
 @Getter
+@Setter
 @NoArgsConstructor
 public class DatasheetItemUpsertRequest {
 
@@ -66,4 +68,8 @@ public class DatasheetItemUpsertRequest {
 
 	@Valid
 	private List<DatasheetItemSlotRequest> slots = new ArrayList<>();
+
+	/** 숫자 항목: 기종 등 다른 항목 슬롯에 따른 min/max */
+	@Valid
+	private List<DatasheetItemRangeRuleRequest> rangeRules = new ArrayList<>();
 }

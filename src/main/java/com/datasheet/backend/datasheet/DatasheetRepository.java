@@ -11,7 +11,13 @@ public interface DatasheetRepository extends JpaRepository<Datasheet, Long> {
 
 	List<Datasheet> findByActiveTrueOrderByCodeAscRevisionDesc();
 
-	@Query("select distinct d from Datasheet d left join fetch d.items i left join fetch i.slots where d.id = :id")
+	@Query("""
+			select distinct d from Datasheet d
+			left join fetch d.items i
+			left join fetch i.slots
+			left join fetch i.rangeRules
+			where d.id = :id
+			""")
 	Optional<Datasheet> findByIdWithItems(@Param("id") Long id);
 
 	boolean existsByCodeAndRevision(String code, int revision);

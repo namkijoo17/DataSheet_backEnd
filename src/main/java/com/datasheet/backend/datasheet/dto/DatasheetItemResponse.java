@@ -39,6 +39,9 @@ public class DatasheetItemResponse {
 	/** 배열일 때 요소별 PDF 좌표 (단일이면 빈 배열) */
 	private List<DatasheetItemSlotResponse> slots;
 
+	/** 기종 슬롯별 min/max (없으면 빈 배열 → 항목 기본 min/max 사용) */
+	private List<DatasheetItemRangeRuleResponse> rangeRules;
+
 	public static DatasheetItemResponse from(DatasheetItem item) {
 		return DatasheetItemResponse.builder()
 				.id(item.getId())
@@ -64,6 +67,7 @@ public class DatasheetItemResponse {
 				.posHeight(item.getPosHeight())
 				.sortOrder(item.getSortOrder())
 				.slots(item.getSlots().stream().map(DatasheetItemSlotResponse::from).toList())
+				.rangeRules(item.getRangeRules().stream().map(DatasheetItemRangeRuleResponse::from).toList())
 				.build();
 	}
 }
