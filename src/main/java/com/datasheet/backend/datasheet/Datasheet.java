@@ -86,6 +86,11 @@ public class Datasheet {
 		item.setDatasheet(this);
 	}
 
+	public void removeItem(DatasheetItem item) {
+		items.remove(item);
+		item.setDatasheet(null);
+	}
+
 	@PrePersist
 	void onCreate() {
 		LocalDateTime now = LocalDateTime.now();

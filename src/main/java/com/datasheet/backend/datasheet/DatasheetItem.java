@@ -171,6 +171,58 @@ public class DatasheetItem {
 		slot.setItem(this);
 	}
 
+	public void clearSlots() {
+		slots.clear();
+	}
+
+	public void updateMeta(
+			String groupName,
+			String label,
+			boolean inspectionItem,
+			boolean array,
+			Integer arraySize,
+			InputType inputType,
+			String unit,
+			Integer decimalPlaces,
+			BigDecimal minValue,
+			BigDecimal maxValue,
+			boolean allowNegative,
+			boolean required,
+			boolean skippable,
+			String formula,
+			int sortOrder
+	) {
+		this.groupName = groupName;
+		this.label = label;
+		this.inspectionItem = inspectionItem;
+		this.array = array;
+		this.arraySize = arraySize;
+		this.inputType = inputType;
+		this.unit = unit;
+		this.decimalPlaces = decimalPlaces;
+		this.minValue = minValue;
+		this.maxValue = maxValue;
+		this.allowNegative = allowNegative;
+		this.required = required;
+		this.skippable = skippable;
+		this.formula = formula;
+		this.sortOrder = sortOrder;
+	}
+
+	public void updatePosition(
+			int pdfPage,
+			BigDecimal posX,
+			BigDecimal posY,
+			BigDecimal posWidth,
+			BigDecimal posHeight
+	) {
+		this.pdfPage = pdfPage;
+		this.posX = posX;
+		this.posY = posY;
+		this.posWidth = posWidth;
+		this.posHeight = posHeight;
+	}
+
 	@PrePersist
 	void onCreate() {
 		LocalDateTime now = LocalDateTime.now();

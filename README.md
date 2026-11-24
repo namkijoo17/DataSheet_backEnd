@@ -1,4 +1,4 @@
-# DataSheet Backend
+# DataSheet
 
 제품검사 데이터시트 전자입력 시스템 백엔드
 
@@ -63,7 +63,7 @@
 
 
 ```
-DataSheed_backEnd/
+DataSheet_backEnd/
 ├── build.gradle
 ├── settings.gradle
 ├── sql/

@@ -71,4 +71,23 @@ public class DatasheetItemSlot {
 		this.posWidth = posWidth;
 		this.posHeight = posHeight;
 	}
+
+	public void updateMeta(int slotIndex, String label) {
+		this.slotIndex = slotIndex;
+		this.label = label;
+	}
+
+	public void updatePosition(
+			int pdfPage,
+			BigDecimal posX,
+			BigDecimal posY,
+			BigDecimal posWidth,
+			BigDecimal posHeight
+	) {
+		this.pdfPage = pdfPage;
+		this.posX = posX;
+		this.posY = posY;
+		this.posWidth = posWidth;
+		this.posHeight = posHeight;
+	}
 }
