@@ -11,6 +11,7 @@ import com.datasheet.backend.datasheet.dto.DatasheetItemUpsertRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetPositionRequest;
 import com.datasheet.backend.datasheet.dto.DatasheetSummaryResponse;
 import com.datasheet.backend.file.DatasheetFileService;
+import com.datasheet.backend.inspection.InspectionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -32,10 +33,11 @@ public class DatasheetService {
 
 	private final DatasheetRepository datasheetRepository;
 	private final DatasheetFileService datasheetFileService;
+	private final InspectionRepository inspectionRepository;
 
 	@Transactional(readOnly = true)
 	public List<DatasheetSummaryResponse> listActive() {
-		return datasheetRepository.findByActiveTrueOrderByCodeAscRevisionDesc().stream()
+		return datasheetRepository.findByActiveTrueOrderByNameAscRevisionDesc().stream()
 				.map(DatasheetSummaryResponse::from)
 				.toList();
 	}
@@ -58,8 +60,6 @@ public class DatasheetService {
 
 		String storedFileName = datasheetFileService.storePdf(file);
 		try {
-			String code = uniqueCodeFromFileName(storedFileName, revision);
-
 			BigDecimal pageWidth = request.getPageWidth() != null
 					? request.getPageWidth()
 					: new BigDecimal("595.44");
@@ -68,7 +68,6 @@ public class DatasheetService {
 					: new BigDecimal("841.92");
 
 			Datasheet sheet = Datasheet.builder()
-					.code(code)
 					.name(name)
 					.revision(revision)
 					.fileName(storedFileName)
@@ -93,50 +92,55 @@ public class DatasheetService {
 						"데이터시트를 찾을 수 없습니다.",
 						HttpStatus.NOT_FOUND
 				));
+		if (inspectionRepository.existsByDatasheetId(id)) {
+			throw new BusinessException(
+					"DATASHEET_IN_USE",
+					"검사 기록이 있는 데이터시트는 삭제할 수 없습니다.",
+					HttpStatus.CONFLICT
+			);
+		}
 		String fileName = sheet.getFileName();
 		datasheetRepository.delete(sheet);
 		datasheetRepository.flush();
-		datasheetFileService.deleteIfExists(fileName);
+		// 다른 시트가 같은 파일을 참조하면 디스크 파일은 유지
+		if (!datasheetRepository.existsByFileName(fileName)) {
+			datasheetFileService.deleteIfExists(fileName);
+		}
 	}
 
-	/** 파일명 기반으로 코드 생성. 중복이면 접미사 부여 */
-	private String uniqueCodeFromFileName(String fileName, int revision) {
-		String stem = fileName;
-		int slash = Math.max(stem.lastIndexOf('/'), stem.lastIndexOf('\\'));
-		if (slash >= 0) {
-			stem = stem.substring(slash + 1);
-		}
-		int dot = stem.lastIndexOf('.');
-		if (dot > 0) {
-			stem = stem.substring(0, dot);
-		}
+	/**
+	 * 기존 시트의 PDF만 교체합니다. 항목·좌표 등 메타는 유지됩니다.
+	 */
+	@Transactional
+	public DatasheetDetailResponse replaceFile(
+			Long id,
+			MultipartFile file,
+			BigDecimal pageWidth,
+			BigDecimal pageHeight
+	) {
+		Datasheet sheet = datasheetRepository.findById(id)
+				.orElseThrow(() -> new BusinessException(
+						"DATASHEET_NOT_FOUND",
+						"데이터시트를 찾을 수 없습니다.",
+						HttpStatus.NOT_FOUND
+				));
 
-		String base = stem.replaceAll("[^A-Za-z0-9가-힣._\\-]+", "-")
-				.replaceAll("-{2,}", "-")
-				.replaceAll("^[.\\-]+|[.\\-]+$", "");
-		if (base.isBlank()) {
-			base = "sheet";
-		}
-		if (base.length() > 40) {
-			base = base.substring(0, 40);
-		}
+		String previousFileName = sheet.getFileName();
+		String storedFileName = datasheetFileService.storePdf(file);
+		try {
+			sheet.replaceFile(storedFileName, pageWidth, pageHeight);
+			datasheetRepository.saveAndFlush(sheet);
 
-		String candidate = base;
-		int suffix = 2;
-		while (datasheetRepository.existsByCodeAndRevision(candidate, revision)) {
-			String suffixText = "-" + suffix;
-			int maxBase = Math.max(1, 50 - suffixText.length());
-			candidate = (base.length() > maxBase ? base.substring(0, maxBase) : base) + suffixText;
-			suffix++;
-			if (suffix > 999) {
-				throw new BusinessException(
-						"DATASHEET_DUPLICATE",
-						"사용 가능한 코드를 만들 수 없습니다.",
-						HttpStatus.CONFLICT
-				);
+			if (!previousFileName.equals(storedFileName)
+					&& !datasheetRepository.existsByFileName(previousFileName)) {
+				datasheetFileService.deleteIfExists(previousFileName);
 			}
+
+			return getDetail(id);
+		} catch (RuntimeException ex) {
+			datasheetFileService.deleteIfExists(storedFileName);
+			throw ex;
 		}
-		return candidate;
 	}
 
 	@Transactional
@@ -169,6 +173,7 @@ public class DatasheetService {
 				.required(request.isRequired())
 				.skippable(request.isSkippable())
 				.formula(request.getFormula())
+				.specDescription(blankToNull(request.getSpecDescription()))
 				.pdfPage(request.getPdfPage())
 				.posX(request.getPosX())
 				.posY(request.getPosY())
@@ -207,6 +212,7 @@ public class DatasheetService {
 				request.isRequired(),
 				request.isSkippable(),
 				request.getFormula(),
+				blankToNull(request.getSpecDescription()),
 				sortOrder
 		);
 		item.updatePosition(
@@ -525,5 +531,13 @@ public class DatasheetService {
 					.maxValue(req.getMaxValue())
 					.build());
 		}
+	}
+
+	private static String blankToNull(String value) {
+		if (value == null) {
+			return null;
+		}
+		String trimmed = value.trim();
+		return trimmed.isEmpty() ? null : trimmed;
 	}
 }

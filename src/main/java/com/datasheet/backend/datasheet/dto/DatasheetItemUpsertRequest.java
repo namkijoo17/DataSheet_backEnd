@@ -52,6 +52,9 @@ public class DatasheetItemUpsertRequest {
 	@Size(max = 500)
 	private String formula;
 
+	@Size(max = 500)
+	private String specDescription;
+
 	private Integer sortOrder;
 
 	private int pdfPage = 1;

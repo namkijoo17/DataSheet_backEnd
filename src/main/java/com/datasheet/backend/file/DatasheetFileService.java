@@ -100,11 +100,8 @@ public class DatasheetFileService {
 		}
 	}
 
+	/** 시트마다 물리 파일이 분리되도록 항상 고유 파일명 사용 */
 	private String uniqueFileName(String baseName) {
-		Path candidate = rootDir.resolve(baseName).normalize();
-		if (!Files.exists(candidate)) {
-			return baseName;
-		}
 		int dot = baseName.lastIndexOf('.');
 		String stem = dot > 0 ? baseName.substring(0, dot) : baseName;
 		String ext = dot > 0 ? baseName.substring(dot) : "";

@@ -30,6 +30,7 @@ public class DatasheetItemResponse {
 	private boolean required;
 	private boolean skippable;
 	private String formula;
+	private String specDescription;
 	private int pdfPage;
 	private BigDecimal posX;
 	private BigDecimal posY;
@@ -60,6 +61,7 @@ public class DatasheetItemResponse {
 				.required(item.isRequired())
 				.skippable(item.isSkippable())
 				.formula(item.getFormula())
+				.specDescription(item.getSpecDescription())
 				.pdfPage(item.getPdfPage())
 				.posX(item.getPosX())
 				.posY(item.getPosY())

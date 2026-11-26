@@ -92,6 +92,10 @@ public class DatasheetItem {
 	@Column(length = 500, columnDefinition = "nvarchar(500)")
 	private String formula;
 
+	/** 규격/방법 안내 (예: 본문 4항 참조) */
+	@Column(name = "spec_description", length = 500, columnDefinition = "nvarchar(500)")
+	private String specDescription;
+
 	@Column(name = "pdf_page", nullable = false)
 	private int pdfPage = 1;
 
@@ -142,6 +146,7 @@ public class DatasheetItem {
 			boolean required,
 			boolean skippable,
 			String formula,
+			String specDescription,
 			int pdfPage,
 			BigDecimal posX,
 			BigDecimal posY,
@@ -164,6 +169,7 @@ public class DatasheetItem {
 		this.required = required;
 		this.skippable = skippable;
 		this.formula = formula;
+		this.specDescription = specDescription;
 		this.pdfPage = pdfPage;
 		this.posX = posX;
 		this.posY = posY;
@@ -205,6 +211,7 @@ public class DatasheetItem {
 			boolean required,
 			boolean skippable,
 			String formula,
+			String specDescription,
 			int sortOrder
 	) {
 		this.groupName = groupName;
@@ -221,6 +228,7 @@ public class DatasheetItem {
 		this.required = required;
 		this.skippable = skippable;
 		this.formula = formula;
+		this.specDescription = specDescription;
 		this.sortOrder = sortOrder;
 	}
 

@@ -145,4 +145,18 @@ public class DatasheetController {
 				.header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename*=UTF-8''" + encoded)
 				.body(resource);
 	}
+
+	@Operation(
+			summary = "데이터시트 PDF 교체",
+			description = "기존 시트의 항목·좌표는 유지한 채 PDF만 교체합니다. pageWidth/pageHeight는 선택입니다."
+	)
+	@PutMapping(path = "/{id}/file", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<DatasheetDetailResponse> replaceFile(
+			@PathVariable Long id,
+			@RequestParam("file") MultipartFile file,
+			@RequestParam(required = false) BigDecimal pageWidth,
+			@RequestParam(required = false) BigDecimal pageHeight
+	) {
+		return ResponseEntity.ok(datasheetService.replaceFile(id, file, pageWidth, pageHeight));
+	}
 }

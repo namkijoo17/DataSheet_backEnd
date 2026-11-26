@@ -2,7 +2,6 @@ IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'datasheets')
 BEGIN
     CREATE TABLE datasheets (
         id              BIGINT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-        code            VARCHAR(50) NOT NULL,
         name            NVARCHAR(200) NOT NULL,
         revision        INT NOT NULL CONSTRAINT DF_datasheets_revision DEFAULT (1),
         file_name       NVARCHAR(255) NOT NULL,
@@ -10,8 +9,7 @@ BEGIN
         page_height     DECIMAL(10,2) NULL,
         active          BIT NOT NULL CONSTRAINT DF_datasheets_active DEFAULT (1),
         created_at      DATETIME2 NOT NULL CONSTRAINT DF_datasheets_created_at DEFAULT (SYSUTCDATETIME()),
-        updated_at      DATETIME2 NOT NULL CONSTRAINT DF_datasheets_updated_at DEFAULT (SYSUTCDATETIME()),
-        CONSTRAINT UQ_datasheets_code_revision UNIQUE (code, revision)
+        updated_at      DATETIME2 NOT NULL CONSTRAINT DF_datasheets_updated_at DEFAULT (SYSUTCDATETIME())
     );
 END
 GO
@@ -37,6 +35,7 @@ BEGIN
         required            BIT NOT NULL CONSTRAINT DF_datasheet_items_required DEFAULT (1),
         skippable           BIT NOT NULL CONSTRAINT DF_datasheet_items_skippable DEFAULT (0),
         formula             NVARCHAR(500) NULL,
+        spec_description    NVARCHAR(500) NULL,
         pdf_page            INT NOT NULL CONSTRAINT DF_datasheet_items_pdf_page DEFAULT (1),
         pos_x               DECIMAL(10,2) NOT NULL,
         pos_y               DECIMAL(10,2) NOT NULL,

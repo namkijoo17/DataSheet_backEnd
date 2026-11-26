@@ -31,9 +31,6 @@ public class Datasheet {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, length = 50)
-	private String code;
-
 	@Column(nullable = false, length = 200, columnDefinition = "nvarchar(200)")
 	private String name;
 
@@ -64,7 +61,6 @@ public class Datasheet {
 
 	@Builder
 	public Datasheet(
-			String code,
 			String name,
 			int revision,
 			String fileName,
@@ -72,7 +68,6 @@ public class Datasheet {
 			BigDecimal pageHeight,
 			boolean active
 	) {
-		this.code = code;
 		this.name = name;
 		this.revision = revision;
 		this.fileName = fileName;
@@ -89,6 +84,17 @@ public class Datasheet {
 	public void removeItem(DatasheetItem item) {
 		items.remove(item);
 		item.setDatasheet(null);
+	}
+
+	/** PDF 파일을 교체하고, 전달된 페이지 크기가 있으면 함께 갱신 */
+	public void replaceFile(String fileName, BigDecimal pageWidth, BigDecimal pageHeight) {
+		this.fileName = fileName;
+		if (pageWidth != null) {
+			this.pageWidth = pageWidth;
+		}
+		if (pageHeight != null) {
+			this.pageHeight = pageHeight;
+		}
 	}
 
 	@PrePersist

@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface DatasheetRepository extends JpaRepository<Datasheet, Long> {
 
-	List<Datasheet> findByActiveTrueOrderByCodeAscRevisionDesc();
+	List<Datasheet> findByActiveTrueOrderByNameAscRevisionDesc();
 
 	@Query("""
 			select distinct d from Datasheet d
@@ -19,5 +19,5 @@ public interface DatasheetRepository extends JpaRepository<Datasheet, Long> {
 			""")
 	Optional<Datasheet> findByIdWithItems(@Param("id") Long id);
 
-	boolean existsByCodeAndRevision(String code, int revision);
+	boolean existsByFileName(String fileName);
 }

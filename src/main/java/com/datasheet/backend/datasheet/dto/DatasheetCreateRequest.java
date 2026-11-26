@@ -14,10 +14,6 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 public class DatasheetCreateRequest {
 
-	/** 미입력 시 파일명에서 자동 생성 */
-	@Size(max = 50)
-	private String code;
-
 	@NotBlank
 	@Size(max = 200)
 	private String name;

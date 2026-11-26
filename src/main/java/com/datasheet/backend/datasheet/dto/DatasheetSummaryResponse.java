@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 public class DatasheetSummaryResponse {
 
 	private Long id;
-	private String code;
 	private String name;
 	private int revision;
 	private String fileName;
@@ -22,7 +21,6 @@ public class DatasheetSummaryResponse {
 	public static DatasheetSummaryResponse from(Datasheet datasheet) {
 		return DatasheetSummaryResponse.builder()
 				.id(datasheet.getId())
-				.code(datasheet.getCode())
 				.name(datasheet.getName())
 				.revision(datasheet.getRevision())
 				.fileName(datasheet.getFileName())
