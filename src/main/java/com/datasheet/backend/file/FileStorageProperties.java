@@ -13,4 +13,7 @@ public class FileStorageProperties {
 
 	/** 데이터시트 원본 파일이 있는 로컬 폴더 (수동 배치) */
 	private String datasheetDir = "./storage/datasheets";
+
+	/** 검사 완료 결과 PDF 저장 폴더 */
+	private String inspectionDir = "./storage/inspections";
 }

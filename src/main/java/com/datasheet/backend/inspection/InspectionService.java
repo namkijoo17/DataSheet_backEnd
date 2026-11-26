@@ -4,6 +4,7 @@ import com.datasheet.backend.common.BusinessException;
 import com.datasheet.backend.datasheet.Datasheet;
 import com.datasheet.backend.datasheet.DatasheetItem;
 import com.datasheet.backend.datasheet.DatasheetRepository;
+import com.datasheet.backend.file.InspectionFileService;
 import com.datasheet.backend.inspection.dto.InspectionAnswerRequest;
 import com.datasheet.backend.inspection.dto.InspectionBasicRequest;
 import com.datasheet.backend.inspection.dto.InspectionDetailResponse;
@@ -12,7 +13,9 @@ import com.datasheet.backend.inspection.dto.InspectionSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.core.io.Resource;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Set;
@@ -24,6 +27,7 @@ public class InspectionService {
 
 	private final InspectionRepository inspectionRepository;
 	private final DatasheetRepository datasheetRepository;
+	private final InspectionFileService inspectionFileService;
 
 	@Transactional
 	public InspectionDetailResponse start(Long userId, InspectionStartRequest request) {
@@ -92,22 +96,75 @@ public class InspectionService {
 				skipped ? null : blankToNull(request.getValue()),
 				skipped ? null : request.getSlotIndex(),
 				skipped ? null : request.getJudgment(),
-				skipped ? null : request.getSlotValues()
+				skipped ? null : request.getSlotValues(),
+				skipped ? null : request.getNgAction(),
+				request.getNgOccurredAt()
 		);
 		inspection.touch();
 	}
 
+	/** 검사를 완료하고, 입력값이 채워진 결과 PDF 를 파일 보관함에 저장한다. */
 	@Transactional
-	public InspectionDetailResponse complete(Long userId, Long id) {
+	public InspectionDetailResponse complete(
+			Long userId,
+			Long id,
+			MultipartFile file,
+			String fileName,
+			int okCount,
+			int ngCount,
+			int skipCount
+	) {
 		Inspection inspection = requireEditable(userId, id);
-		inspection.complete();
-		return InspectionDetailResponse.from(inspection);
+		String storedName = inspectionFileService.storePdf(file);
+		try {
+			inspection.complete(
+					Math.max(okCount, 0),
+					Math.max(ngCount, 0),
+					Math.max(skipCount, 0),
+					sanitizeFileName(fileName, id),
+					storedName
+			);
+			inspectionRepository.flush();
+			return InspectionDetailResponse.from(inspection);
+		} catch (RuntimeException ex) {
+			inspectionFileService.deleteIfExists(storedName);
+			throw ex;
+		}
+	}
+
+	/** 완료된 검사의 결과 PDF (본인 검사만) */
+	@Transactional(readOnly = true)
+	public ResultFile loadResultFile(Long userId, Long id) {
+		Inspection inspection = requireOwned(userId, id);
+		if (inspection.getStoredFileName() == null) {
+			throw new BusinessException(
+					"FILE_NOT_FOUND",
+					"저장된 결과 파일이 없습니다.",
+					HttpStatus.NOT_FOUND
+			);
+		}
+		Resource resource = inspectionFileService.load(inspection.getStoredFileName());
+		return new ResultFile(resource, inspection.getFileName());
+	}
+
+	public record ResultFile(Resource resource, String fileName) {
 	}
 
 	@Transactional
 	public void discard(Long userId, Long id) {
 		Inspection inspection = requireEditable(userId, id);
 		inspectionRepository.delete(inspection);
+	}
+
+	private static String sanitizeFileName(String fileName, Long id) {
+		String name = fileName == null ? "" : fileName.replaceAll("[\\\\/:*?\"<>|\\p{Cntrl}]", "_").trim();
+		if (name.isEmpty()) {
+			name = "inspection_" + id;
+		}
+		if (!name.toLowerCase().endsWith(".pdf")) {
+			name = name + ".pdf";
+		}
+		return name.length() > 255 ? name.substring(name.length() - 255) : name;
 	}
 
 	private void applyBasic(Inspection inspection, InspectionMode mode, InspectionBasicRequest basic) {
@@ -161,11 +218,19 @@ public class InspectionService {
 				.datasheetId(inspection.getDatasheet().getId())
 				.datasheetName(inspection.getDatasheet().getName())
 				.serialNo(inspection.getSerialNo())
+				.unit(inspection.getUnit())
+				.inspector(inspection.getInspector())
 				.mode(inspection.getMode().name())
 				.status(inspection.getStatus().name())
 				.answeredCount(answered)
 				.totalCount(inspectionItemIds.size())
+				.result(inspection.getResult())
+				.okCount(inspection.getOkCount())
+				.ngCount(inspection.getNgCount())
+				.skipCount(inspection.getSkipCount())
+				.fileName(inspection.getFileName())
 				.updatedAt(inspection.getUpdatedAt())
+				.completedAt(inspection.getCompletedAt())
 				.build();
 	}
 

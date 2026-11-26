@@ -9,7 +9,10 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,7 +25,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Tag(name = "Inspection", description = "검사 진행·항목별 저장 API")
@@ -83,13 +89,41 @@ public class InspectionController {
 		inspectionService.saveAnswer(principal.getUser().getId(), id, itemId, request);
 	}
 
-	@Operation(summary = "검사 완료", description = "검사를 완료(COMPLETED) 처리합니다.")
-	@PostMapping("/{id}/complete")
+	@Operation(
+			summary = "검사 완료",
+			description = "검사를 완료(COMPLETED) 처리하고, 입력값이 채워진 결과 PDF 를 파일 보관함에 저장합니다."
+	)
+	@PostMapping(path = "/{id}/complete", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public ResponseEntity<InspectionDetailResponse> complete(
 			@AuthenticationPrincipal CustomUserDetails principal,
-			@PathVariable Long id
+			@PathVariable Long id,
+			@RequestParam("file") MultipartFile file,
+			@RequestParam(required = false) String fileName,
+			@RequestParam(defaultValue = "0") int okCount,
+			@RequestParam(defaultValue = "0") int ngCount,
+			@RequestParam(defaultValue = "0") int skipCount
 	) {
-		return ResponseEntity.ok(inspectionService.complete(principal.getUser().getId(), id));
+		return ResponseEntity.ok(inspectionService.complete(
+				principal.getUser().getId(), id, file, fileName, okCount, ngCount, skipCount
+		));
+	}
+
+	@Operation(summary = "결과 PDF", description = "완료된 검사의 저장된 결과 PDF 를 반환합니다. download=true 면 첨부 다운로드.")
+	@GetMapping("/{id}/file")
+	public ResponseEntity<Resource> file(
+			@AuthenticationPrincipal CustomUserDetails principal,
+			@PathVariable Long id,
+			@RequestParam(defaultValue = "false") boolean download
+	) {
+		InspectionService.ResultFile result = inspectionService.loadResultFile(principal.getUser().getId(), id);
+		String encoded = URLEncoder.encode(result.fileName(), StandardCharsets.UTF_8).replace("+", "%20");
+		return ResponseEntity.ok()
+				.contentType(MediaType.APPLICATION_PDF)
+				.header(
+						HttpHeaders.CONTENT_DISPOSITION,
+						(download ? "attachment" : "inline") + "; filename*=UTF-8''" + encoded
+				)
+				.body(result.resource());
 	}
 
 	@Operation(summary = "진행 중 검사 삭제", description = "완료되지 않은 검사를 삭제합니다.")

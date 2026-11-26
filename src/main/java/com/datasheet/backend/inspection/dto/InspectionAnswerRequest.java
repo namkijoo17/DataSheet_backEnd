@@ -1,11 +1,13 @@
 package com.datasheet.backend.inspection.dto;
 
+import com.datasheet.backend.inspection.NgAction;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -26,4 +28,10 @@ public class InspectionAnswerRequest {
 	private String judgment;
 
 	private Map<Integer, @Size(max = 500) String> slotValues = new LinkedHashMap<>();
+
+	/** NG 발생 시 선택한 처리 방법 (없으면 null) */
+	private NgAction ngAction;
+
+	/** NG 발생 시각 (yyyy-MM-dd'T'HH:mm:ss, 서버 로컬 시간) */
+	private LocalDateTime ngOccurredAt;
 }

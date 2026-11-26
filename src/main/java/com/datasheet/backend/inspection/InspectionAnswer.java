@@ -4,6 +4,8 @@ import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -50,6 +52,14 @@ public class InspectionAnswer {
 	@Column(length = 10)
 	private String judgment;
 
+	/** NG 발생 시 선택한 처리 방법 */
+	@Enumerated(EnumType.STRING)
+	@Column(name = "ng_action", length = 20)
+	private NgAction ngAction;
+
+	@Column(name = "ng_occurred_at")
+	private LocalDateTime ngOccurredAt;
+
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "inspection_answer_slot_values", joinColumns = @JoinColumn(name = "answer_id"))
 	@MapKeyColumn(name = "slot_index")
@@ -70,12 +80,16 @@ public class InspectionAnswer {
 			String value,
 			Integer slotIndex,
 			String judgment,
-			Map<Integer, String> slotValues
+			Map<Integer, String> slotValues,
+			NgAction ngAction,
+			LocalDateTime ngOccurredAt
 	) {
 		this.skipped = skipped;
 		this.value = value;
 		this.slotIndex = slotIndex;
 		this.judgment = judgment;
+		this.ngAction = ngAction;
+		this.ngOccurredAt = ngAction != null ? ngOccurredAt : null;
 		this.slotValues.clear();
 		if (slotValues != null) {
 			slotValues.forEach((key, val) -> {

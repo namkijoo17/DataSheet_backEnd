@@ -89,6 +89,27 @@ public class Inspection {
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
 
+	/** 완료 판정: NG 가 하나라도 있으면 NG, 아니면 OK */
+	@Column(length = 10)
+	private String result;
+
+	@Column(name = "ok_count")
+	private Integer okCount;
+
+	@Column(name = "ng_count")
+	private Integer ngCount;
+
+	@Column(name = "skip_count")
+	private Integer skipCount;
+
+	/** 사용자에게 보이는 결과 파일명 */
+	@Column(name = "file_name", length = 255, columnDefinition = "nvarchar(255)")
+	private String fileName;
+
+	/** 디스크에 저장된 결과 파일명 */
+	@Column(name = "stored_file_name", length = 255)
+	private String storedFileName;
+
 	@Column(name = "created_at", nullable = false)
 	private LocalDateTime createdAt;
 
@@ -158,9 +179,21 @@ public class Inspection {
 		touch();
 	}
 
-	public void complete() {
+	public void complete(
+			int okCount,
+			int ngCount,
+			int skipCount,
+			String fileName,
+			String storedFileName
+	) {
 		this.status = InspectionStatus.COMPLETED;
 		this.completedAt = LocalDateTime.now();
+		this.okCount = okCount;
+		this.ngCount = ngCount;
+		this.skipCount = skipCount;
+		this.result = ngCount > 0 ? "NG" : "OK";
+		this.fileName = fileName;
+		this.storedFileName = storedFileName;
 		touch();
 	}
 

@@ -20,6 +20,12 @@ app.auth.max-failed-login=5
 
 # 데이터시트 파일 폴더 (수동으로 PDF 등 배치)
 app.file.datasheet-dir=./storage/datasheets
+# 검사 완료 결과 PDF 폴더 (파일 보관함)
+app.file.inspection-dir=./storage/inspections
+
+# 업로드 용량 (결과 PDF 는 페이지 이미지 포함)
+spring.servlet.multipart.max-file-size=50MB
+spring.servlet.multipart.max-request-size=50MB
 
 # Swagger
 springdoc.swagger-ui.path=/swagger-ui.html

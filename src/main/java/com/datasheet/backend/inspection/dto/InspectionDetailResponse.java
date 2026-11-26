@@ -23,6 +23,11 @@ public class InspectionDetailResponse {
 	private LocalDateTime createdAt;
 	private LocalDateTime updatedAt;
 	private LocalDateTime completedAt;
+	private String result;
+	private Integer okCount;
+	private Integer ngCount;
+	private Integer skipCount;
+	private String fileName;
 
 	public static InspectionDetailResponse from(Inspection inspection) {
 		Map<Long, InspectionAnswerResponse> answers = new LinkedHashMap<>();
@@ -41,6 +46,11 @@ public class InspectionDetailResponse {
 				.createdAt(inspection.getCreatedAt())
 				.updatedAt(inspection.getUpdatedAt())
 				.completedAt(inspection.getCompletedAt())
+				.result(inspection.getResult())
+				.okCount(inspection.getOkCount())
+				.ngCount(inspection.getNgCount())
+				.skipCount(inspection.getSkipCount())
+				.fileName(inspection.getFileName())
 				.build();
 	}
 }
