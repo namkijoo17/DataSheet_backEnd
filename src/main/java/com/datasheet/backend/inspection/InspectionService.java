@@ -8,6 +8,8 @@ import com.datasheet.backend.file.InspectionFileService;
 import com.datasheet.backend.inspection.dto.InspectionAnswerRequest;
 import com.datasheet.backend.inspection.dto.InspectionBasicRequest;
 import com.datasheet.backend.inspection.dto.InspectionDetailResponse;
+import com.datasheet.backend.inspection.dto.InspectionRecheckRequest;
+import com.datasheet.backend.inspection.dto.InspectionRecheckResponse;
 import com.datasheet.backend.inspection.dto.InspectionStartRequest;
 import com.datasheet.backend.inspection.dto.InspectionSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -101,6 +103,32 @@ public class InspectionService {
 				request.getNgOccurredAt()
 		);
 		inspection.touch();
+	}
+
+	/**
+	 * 항목 재검사 사유를 기록하고, 저장돼 있던 해당 항목 답변을 지운다.
+	 * (답변 삭제는 화면의 자동 저장으로도 이뤄지지만, 이력과 삭제가 어긋나지 않도록 함께 처리한다.)
+	 */
+	@Transactional
+	public InspectionRecheckResponse recordRecheck(
+			Long userId,
+			Long id,
+			Long itemId,
+			InspectionRecheckRequest request
+	) {
+		Inspection inspection = requireEditable(userId, id);
+		InspectionRecheck recheck = inspection.addRecheck(
+				itemId,
+				blankToNull(request.getItemLabel()),
+				request.getReason().trim(),
+				blankToNull(request.getPreviousSummary())
+		);
+		InspectionAnswer answer = inspection.findAnswer(itemId);
+		if (answer != null) {
+			inspection.removeAnswer(answer);
+		}
+		inspectionRepository.flush();
+		return InspectionRecheckResponse.from(recheck);
 	}
 
 	/** 검사를 완료하고, 입력값이 채워진 결과 PDF 를 파일 보관함에 저장한다. */
@@ -208,8 +236,18 @@ public class InspectionService {
 				.filter(InspectionService::isInspectionItem)
 				.map(DatasheetItem::getId)
 				.collect(Collectors.toSet());
+		// 디버깅 모드: 선택하지 않은 항목(SKIP)은 진행률 분모·분자에서 뺀다
+		boolean debugMode = inspection.getMode() == InspectionMode.DEBUG;
+		long skippedCount = inspection.getAnswers().stream()
+				.filter(answer -> inspectionItemIds.contains(answer.getDatasheetItemId()))
+				.filter(InspectionAnswer::isSkipped)
+				.count();
+		int totalCount = debugMode
+				? (int) (inspectionItemIds.size() - skippedCount)
+				: inspectionItemIds.size();
 		int answered = (int) inspection.getAnswers().stream()
 				.filter(answer -> inspectionItemIds.contains(answer.getDatasheetItemId()))
+				.filter(answer -> !(debugMode && answer.isSkipped()))
 				.filter(InspectionAnswer::hasContent)
 				.count();
 
@@ -223,7 +261,7 @@ public class InspectionService {
 				.mode(inspection.getMode().name())
 				.status(inspection.getStatus().name())
 				.answeredCount(answered)
-				.totalCount(inspectionItemIds.size())
+				.totalCount(totalCount)
 				.result(inspection.getResult())
 				.okCount(inspection.getOkCount())
 				.ngCount(inspection.getNgCount())

@@ -7,6 +7,7 @@ import lombok.Getter;
 
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -28,6 +29,8 @@ public class InspectionDetailResponse {
 	private Integer ngCount;
 	private Integer skipCount;
 	private String fileName;
+	/** 재검사 이력(사유 포함), 오래된 순 */
+	private List<InspectionRecheckResponse> rechecks;
 
 	public static InspectionDetailResponse from(Inspection inspection) {
 		Map<Long, InspectionAnswerResponse> answers = new LinkedHashMap<>();
@@ -51,6 +54,7 @@ public class InspectionDetailResponse {
 				.ngCount(inspection.getNgCount())
 				.skipCount(inspection.getSkipCount())
 				.fileName(inspection.getFileName())
+				.rechecks(inspection.getRechecks().stream().map(InspectionRecheckResponse::from).toList())
 				.build();
 	}
 }

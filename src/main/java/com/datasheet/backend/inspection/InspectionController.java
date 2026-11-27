@@ -2,6 +2,8 @@ package com.datasheet.backend.inspection;
 
 import com.datasheet.backend.inspection.dto.InspectionAnswerRequest;
 import com.datasheet.backend.inspection.dto.InspectionDetailResponse;
+import com.datasheet.backend.inspection.dto.InspectionRecheckRequest;
+import com.datasheet.backend.inspection.dto.InspectionRecheckResponse;
 import com.datasheet.backend.inspection.dto.InspectionStartRequest;
 import com.datasheet.backend.inspection.dto.InspectionSummaryResponse;
 import com.datasheet.backend.security.CustomUserDetails;
@@ -87,6 +89,18 @@ public class InspectionController {
 			@Valid @RequestBody InspectionAnswerRequest request
 	) {
 		inspectionService.saveAnswer(principal.getUser().getId(), id, itemId, request);
+	}
+
+	@Operation(summary = "항목 재검사 사유 기록", description = "항목을 다시 검사하기 전에 사유를 기록하고 저장된 답변을 지웁니다.")
+	@PostMapping("/{id}/rechecks/{itemId}")
+	public ResponseEntity<InspectionRecheckResponse> recordRecheck(
+			@AuthenticationPrincipal CustomUserDetails principal,
+			@PathVariable Long id,
+			@PathVariable Long itemId,
+			@Valid @RequestBody InspectionRecheckRequest request
+	) {
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(inspectionService.recordRecheck(principal.getUser().getId(), id, itemId, request));
 	}
 
 	@Operation(

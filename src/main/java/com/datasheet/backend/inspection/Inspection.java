@@ -16,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapKeyColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -85,6 +86,11 @@ public class Inspection {
 
 	@OneToMany(mappedBy = "inspection", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<InspectionAnswer> answers = new ArrayList<>();
+
+	/** 재검사 이력(사유 포함) */
+	@OneToMany(mappedBy = "inspection", cascade = CascadeType.ALL, orphanRemoval = true)
+	@OrderBy("createdAt asc, id asc")
+	private List<InspectionRecheck> rechecks = new ArrayList<>();
 
 	@Column(name = "completed_at")
 	private LocalDateTime completedAt;
@@ -176,7 +182,22 @@ public class Inspection {
 
 	public void clearAnswers() {
 		answers.clear();
+		rechecks.clear();
 		touch();
+	}
+
+	public InspectionRecheck addRecheck(
+			Long datasheetItemId,
+			String itemLabel,
+			String reason,
+			String previousSummary
+	) {
+		InspectionRecheck recheck = new InspectionRecheck(
+				this, datasheetItemId, itemLabel, reason, previousSummary, inspector
+		);
+		rechecks.add(recheck);
+		touch();
+		return recheck;
 	}
 
 	public void complete(
